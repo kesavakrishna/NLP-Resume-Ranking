@@ -2,13 +2,22 @@ import streamlit as st
 import pickle
 import re
 import nltk
+import fitz  # PyMuPDF library
 
 nltk.download('punkt')
 nltk.download('stopwords')
 
-#loading models
-clf = pickle.load(open('clf.pkl','rb'))
-tfidfd = pickle.load(open('tfidf.pkl','rb'))
+# Loading models
+clf = pickle.load(open('clf.pkl', 'rb'))
+tfidfd = pickle.load(open('tfidf.pkl', 'rb'))
+
+def convert_pdf_to_txt(uploaded_file):
+    text = ""
+    with fitz.open("pdf", uploaded_file.read()) as pdf_document:
+        for page_number in range(pdf_document.page_count):
+            page = pdf_document[page_number]
+            text += page.get_text()
+    return text
 
 def clean_resume(resume_text):
     clean_text = re.sub('http\S+\s*', ' ', resume_text)
@@ -19,18 +28,24 @@ def clean_resume(resume_text):
     clean_text = re.sub(r'[^\x00-\x7f]', r' ', clean_text)
     clean_text = re.sub('\s+', ' ', clean_text)
     return clean_text
-# web app
+
+# Web app
 def main():
     st.title("Resume Screening App")
-    uploaded_file = st.file_uploader('Upload Resume', type=['txt','pdf'])
+    uploaded_file = st.file_uploader('Upload Resume', type=['txt', 'pdf'])
 
     if uploaded_file is not None:
         try:
-            resume_bytes = uploaded_file.read()
-            resume_text = resume_bytes.decode('utf-8')
+            # Check if the file is a PDF
+            if uploaded_file.type == "application/pdf":
+                # Convert PDF to text
+                resume_text = convert_pdf_to_txt(uploaded_file)
+            else:
+                # Read text directly for .txt files
+                resume_text = uploaded_file.read().decode('utf-8')
         except UnicodeDecodeError:
             # If UTF-8 decoding fails, try decoding with 'latin-1'
-            resume_text = resume_bytes.decode('latin-1')
+            resume_text = uploaded_file.read().decode('latin-1')
 
         cleaned_resume = clean_resume(resume_text)
         input_features = tfidfd.transform([cleaned_resume])
@@ -63,15 +78,12 @@ def main():
             17: "Network Security Engineer",
             21: "SAP Developer",
             5: "Civil Engineer",
-            0: "Advocate",
+            0: "Advocate"
         }
 
         category_name = category_mapping.get(prediction_id, "Unknown")
-
         st.write("Predicted Category:", category_name)
 
-
-
-# python main
+# Python main
 if __name__ == "__main__":
     main()
