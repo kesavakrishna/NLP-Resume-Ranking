@@ -2,5 +2,8 @@
 Resume Ranking App made using Streamlit
 
 
-https://github.com/kesavakrishna/NLP-Resume-Ranking/assets/92876412/73e98f2e-b33b-4798-8c1c-b347f48315f8
+
+
+
+https://github.com/kesavakrishna/NLP-Resume-Ranking/assets/92876412/2db7fef8-4788-421b-9fc3-09eec2b66754
 
